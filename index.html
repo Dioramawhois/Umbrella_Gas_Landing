@@ -14,7 +14,6 @@
         <img src="img/umbrella-2.png" alt="Logo"> <!-- Подключение логотипа -->
     </div>
     
-    
     <div class="container">
         <h1>Поставить на уведомление</h1>
         <form id="gwei-form">
@@ -28,14 +27,21 @@
     <script>
         // Инициализация мини-приложения Telegram
         Telegram.WebApp.ready();
-        
+
+        // Получение данных пользователя
+        const userId = Telegram.WebApp.initDataUnsafe.user?.id;
+        console.log("User ID: ", userId);
+
         // Событие отправки формы
         document.getElementById('gwei-form').addEventListener('submit', function(e) {
             e.preventDefault();
             const gweiValue = document.getElementById('gwei').value;
+
+            // Формируем данные для отправки
+            const data = JSON.stringify({user_id: userId, gwei_value: gweiValue});
             
-            // Отправляем данные в чат через Telegram API
-            Telegram.WebApp.sendData(gweiValue);
+            // Отправляем данные в Telegram бот через Web Apps API
+            Telegram.WebApp.sendData(data);
             
             // Отображаем сообщение об успешной отправке
             document.getElementById('response-message').textContent = 'Заявка отправлена!';
