@@ -37,14 +37,28 @@
             e.preventDefault();
             const gweiValue = document.getElementById('gwei').value;
 
+            // Проверка наличия userId
+            if (!userId) {
+                console.error("User ID не найден");
+                document.getElementById('response-message').textContent = 'Ошибка: не удалось получить ID пользователя.';
+                return;
+            }
+
             // Формируем данные для отправки
             const data = JSON.stringify({user_id: userId, gwei_value: gweiValue});
-            
-            // Отправляем данные в Telegram бот через Web Apps API
-            Telegram.WebApp.sendData(data);
-            
-            // Отображаем сообщение об успешной отправке
-            document.getElementById('response-message').textContent = 'Заявка отправлена!';
+            console.log("Отправляемые данные:", data);
+
+            try {
+                // Отправляем данные в Telegram бот через Web Apps API
+                Telegram.WebApp.sendData(data);
+                console.log("Данные отправлены успешно");
+
+                // Отображаем сообщение об успешной отправке
+                document.getElementById('response-message').textContent = 'Заявка отправлена!';
+            } catch (error) {
+                console.error('Ошибка отправки данных:', error);
+                document.getElementById('response-message').textContent = 'Ошибка при отправке данных.';
+            }
             
             // Закрываем веб-приложение после отправки данных
             setTimeout(() => Telegram.WebApp.close(), 1500);
