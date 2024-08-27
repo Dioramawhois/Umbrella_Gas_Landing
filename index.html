@@ -7,6 +7,15 @@
     <link rel="stylesheet" href="static/styles.css"> <!-- Подключение стилей -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet"> <!-- Подключение шрифта Roboto -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script> <!-- Подключение Telegram Web Apps API -->
+    <style>
+        /* Добавим стиль для отображения user_id серым цветом под кнопкой */
+        #user-id-display {
+            color: gray;
+            font-size: 0.9em;
+            text-align: center;
+            margin-top: 10px;
+        }
+    </style>
 </head>
 <body>
     <!-- Логотип компании -->
@@ -22,32 +31,91 @@
             <button class="glow-on-hover" type="submit"><span>Поставить на уведомление</span></button> <!-- Кнопка с эффектом свечения -->
         </form>
         <p id="response-message"></p>
+        <p id="user-id-display"></p> <!-- Добавленный элемент для отображения user_id -->
     </div>
 
+    <!-- Скрипт: Функция для получения параметров из URL -->
+    <script>
+        function getUrlParameter(name) {
+            name = name.replace(/[\[\]]/g, '\\$&');
+            const regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+                results = regex.exec(window.location.href);
+            if (!results) return null;
+            if (!results[2]) return '';
+            return decodeURIComponent(results[2].replace(/\+/g, ' '));
+        }
+    </script>
+
+    <!-- Скрипт: Получение user_id из URL или initDataUnsafe -->
+    <script>
+        // Пытаемся получить user_id из URL
+        let userId = getUrlParameter('user_id');
+
+        // Логирование полученного user_id
+        console.log("User ID from URL: ", userId);
+
+        // Если не удалось получить user_id из URL, используем initDataUnsafe
+        if (!userId) {
+            console.log("User ID не найден в URL. Пробуем получить через Telegram WebApp.");
+            userId = Telegram.WebApp.initDataUnsafe.user?.id;
+        }
+
+        // Логирование user_id для отладки
+        console.log("User ID: ", userId);
+
+        // Отображение user_id на странице
+        if (userId) {
+            document.getElementById('user-id-display').textContent = 'Ваш ID: ' + userId;
+        }
+    </script>
+
+    <!-- Скрипт: Инициализация Telegram WebApp -->
     <script>
         // Инициализация мини-приложения Telegram
         Telegram.WebApp.ready();
+    </script>
 
-        // Получение данных пользователя
-        const userId = Telegram.WebApp.initDataUnsafe.user?.id;
-        console.log("User ID: ", userId);
-
-        // Событие отправки формы
+    <!-- Скрипт: Обработчик отправки формы -->
+    <script>
         document.getElementById('gwei-form').addEventListener('submit', function(e) {
             e.preventDefault();
             const gweiValue = document.getElementById('gwei').value;
 
+            // Проверка наличия userId
+            if (!userId) {
+                console.error("User ID не найден");
+                document.getElementById('response-message').textContent = 'Ошибка: не удалось получить ID пользователя.';
+                return;
+            }
+
             // Формируем данные для отправки
             const data = JSON.stringify({user_id: userId, gwei_value: gweiValue});
-            
-            // Отправляем данные в Telegram бот через Web Apps API
-            Telegram.WebApp.sendData(data);
-            
-            // Отображаем сообщение об успешной отправке
-            document.getElementById('response-message').textContent = 'Заявка отправлена!';
+            console.log("Отправляемые данные:", data);
+
+            try {
+                // Отправляем данные в Telegram бот через Web Apps API
+                Telegram.WebApp.sendData(data);
+                console.log("Данные отправлены успешно");
+
+                // Отображаем сообщение об успешной отправке
+                document.getElementById('response-message').textContent = 'Заявка отправлена!';
+            } catch (error) {
+                console.error('Ошибка отправки данных:', error);
+                document.getElementById('response-message').textContent = 'Ошибка при отправке данных.';
+            }
             
             // Закрываем веб-приложение после отправки данных
             setTimeout(() => Telegram.WebApp.close(), 1500);
+        });
+    </script>
+
+    <!-- Скрипт: Скрытие клавиатуры при тапе на любое место за пределами текстового поля -->
+    <script>
+        document.addEventListener('click', function(event) {
+            const isClickInsideInput = document.getElementById('gwei').contains(event.target);
+            if (!isClickInsideInput) {
+                document.activeElement.blur(); // Скрывает клавиатуру, убирая фокус с текстового поля
+            }
         });
     </script>
 </body>
